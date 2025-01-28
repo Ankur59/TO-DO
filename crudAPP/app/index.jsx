@@ -9,28 +9,23 @@ import {
 
 import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { data } from "@/data/todos";
 import { TextInput } from "react-native-paper";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Inter_500Medium, useFonts } from "@expo-google-fonts/inter";
 import { Switch } from "react-native";
-import Animated, { LinearTransition } from "react-native-reanimated";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 
-//Main function for Index page
 const Index = () => {
-  // Usestate variables for different takes in todo app
   const [todo, settodo] = useState([]);
   const [text, settext] = useState("");
   const [toggle, setoggle] = useState(true);
   const [loaded, error] = useFonts({ Inter_500Medium });
 
-  //Varible for expo router
   const router = useRouter();
-  //Object have different shades of dark and light color
+
   const colors = {
     dark: "black",
     dark1: "#292B36",
@@ -39,31 +34,34 @@ const Index = () => {
     light1: "#F1F1F1",
     light2: "#F7F7F7",
   };
-  //Function that return color on basis of user toggle
+
   const getcolor = (dark, light) => (toggle ? dark : light);
-  //Use effect for aysnc storage
+
+  // Load todos from AsyncStorage
   useEffect(() => {
     const fetchdata = async () => {
       try {
         const jsonvalue = await AsyncStorage.getItem("TodoApp");
-        const storage = jsonvalue != null ? JSON.parse(jsonvalue) : null;
-        if (storage && storage.lenght) {
+        const storage = jsonvalue != null ? JSON.parse(jsonvalue) : [];
+        if (storage && storage.length) {
           settodo(storage.sort((a, b) => a.id - b.id));
         }
       } catch (e) {
-        console.log(e);
+        console.error("Error loading todos:", e);
       }
     };
     fetchdata();
-  }, [data]);
+  }, []);
 
-  //use effect for async storage
+  // Save todos to AsyncStorage
   useEffect(() => {
     const storedata = async () => {
       try {
         const jsonvalue = JSON.stringify(todo);
         await AsyncStorage.setItem("TodoApp", jsonvalue);
-      } catch (e) {}
+      } catch (e) {
+        console.error("Error saving todos:", e);
+      }
     };
     storedata();
   }, [todo]);
@@ -72,7 +70,6 @@ const Index = () => {
     return null;
   }
 
-  // Takes the user entered text creates a unique id and then add it to the useState
   const addtodo = () => {
     if (text.trim()) {
       const newid = todo.length > 0 ? todo[0].id + 1 : 1;
@@ -80,24 +77,19 @@ const Index = () => {
       settext("");
     }
   };
-};
-// Changes the completed status of a todo when called
-const toggletodo = (id) => {
-  settodo(
-    todo.map((todo) =>
-      todo.id === id ? { ...todo, completed: !todo.completed } : todo
-  )
-);
-};
-// Only stores the todo whose id don't match the id we want to delete
-const removetodo = (id) => {
-  settodo(todo.filter((todo) => todo.id != id));
-};
-//Navigate user to different directory when called
-const handlepress = (id) => {
-  router.push(`/todo/${id}`);
 
-  //Renders Item on for each todo including the button 
+  const toggletodo = (id) => {
+    settodo(
+      todo.map((todo) =>
+        todo.id === id ? { ...todo, completed: !todo.completed } : todo
+      )
+    );
+  };
+
+  const removetodo = (id) => {
+    settodo(todo.filter((todo) => todo.id !== id));
+  };
+
   const renderitem = ({ item }) => {
     return (
       <View
@@ -133,7 +125,6 @@ const handlepress = (id) => {
               name="delete-circle"
               size={24}
               color={getcolor(colors.light, colors.dark)}
-              selectable={undefined}
             />
           </TouchableOpacity>
           <TouchableOpacity
@@ -154,7 +145,6 @@ const handlepress = (id) => {
     );
   };
 
-  //Return statement of the main function 
   return (
     <SafeAreaView
       style={{
@@ -185,12 +175,11 @@ const handlepress = (id) => {
         </TouchableOpacity>
       </View>
       {todo.length > 0 ? (
-        <Animated.FlatList
+        <FlatList
           style={{ flex: 1 }}
           data={todo}
           keyExtractor={(todos) => todos.id.toString()}
           renderItem={renderitem}
-          itemLayoutAnimation={LinearTransition}
           keyboardDismissMode={"on-drag"}
         />
       ) : (
@@ -210,11 +199,12 @@ const handlepress = (id) => {
     </SafeAreaView>
   );
 };
+
 const style = StyleSheet.create({
   txt_inpt: {
     width: "77%",
-    marginHorizontal: "10",
-    marginVertical: "10",
+    marginHorizontal: 10,
+    marginVertical: 10,
     fontFamily: "Inter_500Medium",
   },
   tblo: {
@@ -227,18 +217,16 @@ const style = StyleSheet.create({
     marginLeft: 10,
   },
   todoitem: {
-    wodth: "90%",
+    width: "90%",
     maxWidth: 900,
     margin: 10,
     borderWidth: 2,
     borderColor: "blue",
     borderRadius: 10,
     height: 50,
-    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    // backgroundColor:
   },
   todotext: {
     fontSize: 20,
@@ -248,9 +236,6 @@ const style = StyleSheet.create({
   },
   completedtext: {
     textDecorationLine: "line-through",
-  },
-  completedtextVW: {
-    backgroundColor: "lightgreen",
   },
   delete: {
     padding: 5,
